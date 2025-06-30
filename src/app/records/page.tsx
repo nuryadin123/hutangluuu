@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import MainLayout from "@/components/layout/main-layout"
 import { getDebtRecords, addPayment } from "@/services/debt-service"
 import type { DebtRecord } from "@/lib/types"
@@ -15,6 +15,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
@@ -29,7 +36,13 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, Loader2, FileDown } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Loader2,
+  FileDown,
+  ArrowDownCircle,
+  ArrowUpCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -73,6 +86,23 @@ export default function RecordsPage() {
     }
     getData();
   }, []);
+
+  const recentPayments = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    const allPayments = data.flatMap(record => 
+        (record.payments || []).map(payment => ({
+            ...payment,
+            recordId: record.id,
+            recordName: record.name,
+            recordType: record.type,
+        }))
+    );
+
+    return allPayments
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+  }, [data]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -212,6 +242,46 @@ export default function RecordsPage() {
           </Button>
         </div>
         <DataTable columns={columns} data={data} onViewDetails={setSelectedRecord} />
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Riwayat Pembayaran Terbaru</CardTitle>
+            <CardDescription>5 pembayaran terakhir yang dicatat di semua transaksi.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentPayments.length > 0 ? (
+              <div className="space-y-4">
+                {recentPayments.map((payment, index) => (
+                  <div key={`${payment.recordId}-${index}`} className="flex items-center">
+                    <div className="p-2 bg-muted rounded-full mr-4">
+                      {payment.recordType === 'hutang' ? (
+                        <ArrowDownCircle className="h-5 w-5 text-destructive" />
+                      ) : (
+                        <ArrowUpCircle className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        Pembayaran untuk {payment.recordName}
+                      </p>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        Jenis: {payment.recordType}
+                      </p>
+                    </div>
+                    <div className="ml-auto font-medium text-right">
+                      {formatCurrency(payment.amount)}
+                      <p className="text-xs text-muted-foreground">{format(new Date(payment.date), 'd MMM yyyy', { locale: localeId })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground h-24 flex items-center justify-center">
+                Belum ada riwayat pembayaran.
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {selectedRecord && (

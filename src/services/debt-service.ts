@@ -15,7 +15,7 @@ import {
   where,
 } from 'firebase/firestore';
 
-type DebtRecordInput = Omit<DebtRecord, 'id' | 'date' | 'dueDate' | 'payments'> & {
+type DebtRecordInput = Omit<DebtRecord, 'id' | 'date' | 'dueDate'> & {
   date: Date;
   dueDate: Date;
 };
@@ -65,10 +65,17 @@ export async function addDebtRecord(record: DebtRecordInput): Promise<string> {
     throw new Error('User must be logged in to add a record.');
   }
 
+  // Handle payments during import, converting string dates to Date objects
+  const paymentsWithTimestamps = record.payments?.map(p => ({
+      ...p,
+      date: new Date(p.date), 
+  })) || [];
+
+
   const docRef = await addDoc(debtCollectionRef, {
     ...record,
     userId: user.uid, // Associate record with the logged-in user
-    payments: [],
+    payments: paymentsWithTimestamps,
   });
   return docRef.id;
 }

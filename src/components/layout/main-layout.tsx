@@ -21,6 +21,7 @@ import {
   PlusCircle,
   FileBarChart,
   Loader2,
+  DatabaseZap,
 } from 'lucide-react';
 import Header from './header';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/customers">
                   <Users />
                   <span>Pelanggan</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive('/sync')}
+                tooltip={{ children: 'Backup & Sync' }}
+              >
+                <Link href="/sync">
+                  <DatabaseZap />
+                  <span>Backup & Sync</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

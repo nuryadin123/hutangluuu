@@ -70,7 +70,7 @@ export const columns: ColumnDef<DebtRecord>[] = [
     header: "Jenis",
      cell: ({ row }) => {
       const type = row.original.type;
-      return <Badge variant={type === 'hutang' ? 'destructive' : 'default'} className={cn(type === 'piutang' && 'bg-emerald-500 text-white hover:bg-emerald-600')}>{type}</Badge>
+      return <Badge variant={type === 'hutang' ? 'destructive' : 'default'}>{type}</Badge>
     },
   },
   {
@@ -78,7 +78,7 @@ export const columns: ColumnDef<DebtRecord>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
-      return <Badge variant={status === 'lunas' ? 'secondary' : 'outline'} className={cn(status === 'lunas' ? 'text-green-700 border-green-300 bg-green-100 dark:text-green-300 dark:border-green-700 dark:bg-green-900/30' : '')}>{status}</Badge>
+      return <Badge variant={status === 'lunas' ? 'secondary' : 'outline'}>{status}</Badge>
     },
   },
   {

@@ -98,7 +98,7 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Total Piutang
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalPiutang)}</div>
@@ -150,7 +150,7 @@ export default function Dashboard() {
                       {tx.type === 'hutang' ? (
                         <ArrowDownCircle className="h-5 w-5 text-destructive" />
                       ) : (
-                        <ArrowUpCircle className="h-5 w-5 text-emerald-500" />
+                        <ArrowUpCircle className="h-5 w-5 text-primary" />
                       )}
                     </div>
                     <div className="flex-1 space-y-1">
@@ -193,7 +193,7 @@ export default function Dashboard() {
                     <TableRow key={due.id}>
                       <TableCell>{due.name}</TableCell>
                       <TableCell>
-                        <Badge variant={due.type === 'hutang' ? 'destructive' : 'default'} className={due.type === 'piutang' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
+                        <Badge variant={due.type === 'hutang' ? 'destructive' : 'default'}>
                           {due.type}
                         </Badge>
                       </TableCell>

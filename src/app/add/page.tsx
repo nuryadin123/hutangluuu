@@ -51,7 +51,7 @@ const formSchema = z.object({
   currency: z.enum(['IDR', 'USD']),
   date: z.date({ required_error: 'Tanggal transaksi harus diisi.' }),
   dueDate: z.date({ required_error: 'Tanggal jatuh tempo harus diisi.' }),
-  description: z.string().min(5, { message: 'Deskripsi minimal 5 karakter.' }),
+  description: z.string(),
 });
 
 export default function AddRecordPage() {
@@ -260,7 +260,7 @@ export default function AddRecordPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel>Deskripsi</FormLabel>
+                        <FormLabel>Deskripsi (Opsional)</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Tulis deskripsi singkat mengenai transaksi..."

@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import type { DebtRecord, Payment } from '@/lib/types';
 import {
   collection,
@@ -12,6 +12,7 @@ import {
   Timestamp,
   getDoc,
   arrayUnion,
+  where,
 } from 'firebase/firestore';
 
 type DebtRecordInput = Omit<DebtRecord, 'id' | 'date' | 'dueDate' | 'payments'> & {
@@ -24,7 +25,12 @@ type AddPaymentInput = Omit<Payment, 'date'> & { date: Date };
 const debtCollectionRef = collection(db, 'debt-records');
 
 export async function getDebtRecords(): Promise<DebtRecord[]> {
-  const q = query(debtCollectionRef, orderBy('date', 'desc'));
+  const user = auth.currentUser;
+  if (!user) {
+    return []; // No user logged in, return no records
+  }
+
+  const q = query(debtCollectionRef, where('userId', '==', user.uid), orderBy('date', 'desc'));
   const querySnapshot = await getDocs(q);
   const records = querySnapshot.docs.map((doc) => {
     const data = doc.data();
@@ -49,9 +55,15 @@ export async function getDebtRecords(): Promise<DebtRecord[]> {
 }
 
 export async function addDebtRecord(record: DebtRecordInput): Promise<string> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User must be logged in to add a record.');
+  }
+
   const docRef = await addDoc(debtCollectionRef, {
     ...record,
-    payments: []
+    userId: user.uid, // Associate record with the logged-in user
+    payments: [],
   });
   return docRef.id;
 }
@@ -61,11 +73,13 @@ export async function updateDebtRecord(
   updates: Partial<DebtRecord>
 ) {
   const recordDoc = doc(db, 'debt-records', id);
+  // TODO: Add security rule to ensure only the owner can update
   await updateDoc(recordDoc, updates);
 }
 
 export async function deleteDebtRecord(id: string) {
   const recordDoc = doc(db, 'debt-records', id);
+  // TODO: Add security rule to ensure only the owner can delete
   await deleteDoc(recordDoc);
 }
 
@@ -77,6 +91,7 @@ export async function addPayment(recordId: string, payment: AddPaymentInput): Pr
     throw new Error('Record not found');
   }
 
+  // TODO: Add security rule to ensure only the owner can add payments
   const recordData = recordSnap.data();
   // Ensure payments is an array before reducing
   const existingPayments = recordData.payments || [];

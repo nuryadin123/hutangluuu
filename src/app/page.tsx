@@ -36,6 +36,8 @@ import { id as localeId } from 'date-fns/locale';
 import { getDebtRecords } from '@/services/debt-service';
 import type { DebtRecord } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const chartConfig = {
   piutang: {
@@ -53,17 +55,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const records = await getDebtRecords();
-        setData(records);
-      } catch (error) {
-        console.error("Failed to fetch records:", error);
-      } finally {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        async function fetchData() {
+          setLoading(true);
+          try {
+            const records = await getDebtRecords();
+            setData(records);
+          } catch (error) {
+            console.error("Failed to fetch records:", error);
+            setData([]);
+          } finally {
+            setLoading(false);
+          }
+        }
+        fetchData();
+      } else {
+        setData([]);
         setLoading(false);
       }
-    }
-    fetchData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const monthlyCashflowData = useMemo(() => {

@@ -10,6 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+
 
 interface CustomerSummary {
   name: string;
@@ -36,36 +39,47 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const records = await getDebtRecords();
-        
-        const customerData: { [key: string]: CustomerSummary } = {};
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        async function fetchData() {
+          setLoading(true);
+          try {
+            const records = await getDebtRecords();
+            
+            const customerData: { [key: string]: CustomerSummary } = {};
 
-        records.forEach(record => {
-          const remainingAmount = calculateRemaining(record);
+            records.forEach(record => {
+              const remainingAmount = calculateRemaining(record);
 
-          if (remainingAmount <= 0) return;
-          
-          if (!customerData[record.name]) {
-            customerData[record.name] = { name: record.name, totalPiutang: 0 };
+              if (remainingAmount <= 0) return;
+              
+              if (!customerData[record.name]) {
+                customerData[record.name] = { name: record.name, totalPiutang: 0 };
+              }
+              
+              if (record.type === 'piutang') {
+                customerData[record.name].totalPiutang += remainingAmount;
+              }
+            });
+            
+            const customerList = Object.values(customerData).filter(c => c.totalPiutang > 0).sort((a,b) => a.name.localeCompare(b.name));
+            setCustomers(customerList);
+
+          } catch (error) {
+            console.error("Failed to fetch records for customers:", error);
+            setCustomers([]);
+          } finally {
+            setLoading(false);
           }
-          
-          if (record.type === 'piutang') {
-            customerData[record.name].totalPiutang += remainingAmount;
-          }
-        });
-        
-        const customerList = Object.values(customerData).filter(c => c.totalPiutang > 0).sort((a,b) => a.name.localeCompare(b.name));
-        setCustomers(customerList);
-
-      } catch (error) {
-        console.error("Failed to fetch records for customers:", error);
-      } finally {
+        }
+        fetchData();
+      } else {
+        setCustomers([]);
         setLoading(false);
       }
-    }
-    fetchData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (loading) {

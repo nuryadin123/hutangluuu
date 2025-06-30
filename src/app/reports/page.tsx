@@ -26,6 +26,8 @@ import { FileDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useToast } from '@/hooks/use-toast';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -51,17 +53,28 @@ export default function ReportsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const records = await getDebtRecords();
-        setData(records);
-      } catch (error) {
-        console.error("Failed to fetch records:", error);
-      } finally {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        async function fetchData() {
+          setLoading(true);
+          try {
+            const records = await getDebtRecords();
+            setData(records);
+          } catch (error) {
+            console.error("Failed to fetch records:", error);
+            setData([]);
+          } finally {
+            setLoading(false);
+          }
+        }
+        fetchData();
+      } else {
+        setData([]);
         setLoading(false);
       }
-    }
-    fetchData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const calculateRemaining = (record: DebtRecord) => {

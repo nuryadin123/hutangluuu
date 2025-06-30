@@ -56,6 +56,9 @@ import {
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -86,17 +89,28 @@ export default function RecordsPage() {
   });
 
   useEffect(() => {
-    async function getData() {
-      try {
-        const records = await getDebtRecords();
-        setData(records);
-      } catch (error) {
-        console.error("Failed to fetch records:", error);
-      } finally {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        async function getData() {
+          setLoading(true);
+          try {
+            const records = await getDebtRecords();
+            setData(records);
+          } catch (error) {
+            console.error("Failed to fetch records:", error);
+            setData([]);
+          } finally {
+            setLoading(false);
+          }
+        }
+        getData();
+      } else {
+        setData([]);
         setLoading(false);
       }
-    }
-    getData();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const recentPayments = useMemo(() => {

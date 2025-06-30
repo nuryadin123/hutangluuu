@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowData } from "@tanstack/react-table"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,12 @@ import { Badge } from "@/components/ui/badge"
 import { DebtRecord } from "@/lib/types"
 import { format } from "date-fns"
 import { id as localeId } from 'date-fns/locale';
+
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData extends RowData> {
+    onViewDetails: (record: TData) => void;
+  }
+}
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -63,7 +69,15 @@ export const columns: ColumnDef<DebtRecord>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+    cell: ({ row, table }) => (
+        <Button
+            variant="link"
+            className="p-0 h-auto font-medium text-left"
+            onClick={() => table.options.meta?.onViewDetails(row.original)}
+        >
+            {row.getValue("name")}
+        </Button>
+    ),
   },
   {
     accessorKey: "type",
@@ -110,7 +124,7 @@ export const columns: ColumnDef<DebtRecord>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const record = row.original
 
       return (
@@ -129,7 +143,9 @@ export const columns: ColumnDef<DebtRecord>[] = [
               Salin ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Lihat Detail</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => table.options.meta?.onViewDetails(record)}>
+                Lihat Detail
+            </DropdownMenuItem>
             <DropdownMenuItem>Ubah</DropdownMenuItem>
             <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">Hapus</DropdownMenuItem>
           </DropdownMenuContent>

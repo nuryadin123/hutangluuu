@@ -51,7 +51,7 @@ const formSchema = z.object({
   currency: z.enum(['IDR', 'USD']),
   date: z.date({ required_error: 'Tanggal transaksi harus diisi.' }),
   dueDate: z.date({ required_error: 'Tanggal jatuh tempo harus diisi.' }),
-  description: z.string(),
+  description: z.string().optional(),
 });
 
 export default function AddRecordPage() {
@@ -66,6 +66,7 @@ export default function AddRecordPage() {
       currency: 'IDR',
       status: 'belum lunas',
       description: '',
+      date: new Date(),
     },
   });
 

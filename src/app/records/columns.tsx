@@ -114,7 +114,19 @@ export const columns: ColumnDef<DebtRecord>[] = [
   },
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Jumlah</div>,
+    header: ({ column }) => {
+      return (
+        <div className="text-right">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Jumlah
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )
+    },
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"))
       return <div className="text-right font-mono">{formatCurrency(amount)}</div>

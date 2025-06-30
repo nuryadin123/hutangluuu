@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from "@/components/layout/main-layout"
-import { getDebtRecords, addPayment } from "@/services/debt-service"
+import { getDebtRecords, addPayment, deleteDebtRecord } from "@/services/debt-service"
 import type { DebtRecord } from "@/lib/types"
 import { DataTable } from "./data-table"
 import { columns } from "./columns"
@@ -15,6 +15,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
@@ -63,6 +73,8 @@ export default function RecordsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<DebtRecord | null>(null);
   const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<DebtRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const paymentForm = useForm<z.infer<typeof paymentFormSchema>>({
@@ -201,6 +213,29 @@ export default function RecordsPage() {
     }
   }
 
+  async function confirmDelete() {
+    if (!recordToDelete) return;
+    setIsDeleting(true);
+    try {
+        await deleteDebtRecord(recordToDelete.id);
+        setData(data.filter(r => r.id !== recordToDelete.id));
+        toast({
+            title: "Berhasil!",
+            description: "Catatan telah berhasil dihapus.",
+        });
+        setRecordToDelete(null);
+    } catch (error) {
+        console.error("Error deleting record:", error);
+        toast({
+            title: "Gagal!",
+            description: "Terjadi kesalahan saat menghapus catatan.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsDeleting(false);
+    }
+  }
+
   const totalPaid = selectedRecord?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
   const remainingAmount = selectedRecord ? selectedRecord.amount - totalPaid : 0;
 
@@ -241,7 +276,7 @@ export default function RecordsPage() {
             Export PDF
           </Button>
         </div>
-        <DataTable columns={columns} data={data} onViewDetails={setSelectedRecord} />
+        <DataTable columns={columns} data={data} onViewDetails={setSelectedRecord} onDeleteRecord={setRecordToDelete} />
 
         <Card className="mt-8">
           <CardHeader>
@@ -432,6 +467,26 @@ export default function RecordsPage() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {recordToDelete && (
+        <AlertDialog open={!!recordToDelete} onOpenChange={(open) => !open && setRecordToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan secara permanen dari server kami.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setRecordToDelete(null)} disabled={isDeleting}>Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Hapus
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </MainLayout>
   )

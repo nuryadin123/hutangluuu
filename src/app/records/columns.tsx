@@ -21,6 +21,7 @@ import { id as localeId } from 'date-fns/locale';
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     onViewDetails: (record: TData) => void;
+    onDeleteRecord: (record: TData) => void;
   }
 }
 
@@ -163,7 +164,12 @@ export const columns: ColumnDef<DebtRecord>[] = [
                 Lihat Detail
             </DropdownMenuItem>
             <DropdownMenuItem>Ubah</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">Hapus</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              onClick={() => table.options.meta?.onDeleteRecord(record)}
+            >
+                Hapus
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )

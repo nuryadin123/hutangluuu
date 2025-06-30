@@ -19,15 +19,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { getDebtRecords } from '@/services/debt-service';
 import type { DebtRecord } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const barChartData = [
-  { month: 'Jan', hutang: 1860, piutang: 800 },
-  { month: 'Feb', hutang: 3050, piutang: 2000 },
-  { month: 'Mar', hutang: 2370, piutang: 1200 },
-  { month: 'Apr', hutang: 730, piutang: 1900 },
-  { month: 'Mei', hutang: 2090, piutang: 1300 },
-  { month: 'Jun', hutang: 2140, piutang: 1400 },
-];
+import { subMonths, addMonths, format, isAfter } from 'date-fns';
+import { id as localeId } from 'date-fns/locale';
 
 const barChartConfig = {
   piutang: {
@@ -115,6 +108,41 @@ export default function ReportsPage() {
     });
 
     return flatList.sort((a, b) => b.amount - a.amount).slice(0, 5);
+  }, [data]);
+  
+  const monthlyCashflowData = useMemo(() => {
+    const today = new Date();
+    const sixMonthsAgo = subMonths(new Date(today.getFullYear(), today.getMonth(), 1), 5);
+
+    const monthlyTotals: { [key: string]: { hutang: number; piutang: number } } = {};
+    const monthLabels: { [key: string]: string } = {};
+
+    for (let i = 0; i < 6; i++) {
+        const monthDate = addMonths(sixMonthsAgo, i);
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthName = format(monthDate, 'MMM', { locale: localeId });
+        monthlyTotals[monthKey] = { hutang: 0, piutang: 0 };
+        monthLabels[monthKey] = monthName;
+    }
+
+    data.forEach(record => {
+        const recordDate = new Date(record.date);
+        if (isAfter(recordDate, subMonths(sixMonthsAgo, 1))) { // Ensure we capture all relevant records
+            const monthKey = format(recordDate, 'yyyy-MM');
+            if (monthlyTotals[monthKey]) {
+                if (record.type === 'hutang') {
+                    monthlyTotals[monthKey].hutang += record.amount;
+                } else {
+                    monthlyTotals[monthKey].piutang += record.amount;
+                }
+            }
+        }
+    });
+
+    return Object.entries(monthlyTotals).map(([monthKey, totals]) => ({
+        month: monthLabels[monthKey],
+        ...totals,
+    }));
   }, [data]);
 
 
@@ -204,12 +232,12 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Aliran Kas Bulanan</CardTitle>
             <CardDescription>
-              Visualisasi hutang dan piutang Anda selama 6 bulan terakhir. (Data dummy)
+              Visualisasi hutang dan piutang Anda selama 6 bulan terakhir.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={barChartConfig} className="h-[300px] w-full">
-              <BarChart data={barChartData}>
+              <BarChart data={monthlyCashflowData}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey="month"

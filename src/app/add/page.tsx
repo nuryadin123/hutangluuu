@@ -62,7 +62,7 @@ export default function AddRecordPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      amount: 0,
+      amount: '' as any,
       currency: 'IDR',
       status: 'belum lunas',
       description: '',

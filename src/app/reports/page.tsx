@@ -15,7 +15,7 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell } from 'recharts';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { getDebtRecords } from '@/services/debt-service';
 import type { DebtRecord } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,12 +77,12 @@ export default function ReportsPage() {
     return () => unsubscribe();
   }, []);
 
-  const calculateRemaining = (record: DebtRecord) => {
+  const calculateRemaining = useCallback((record: DebtRecord) => {
     if (record.status === 'lunas') return 0;
     const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
     const remaining = record.amount - totalPaid;
     return remaining > 0 ? remaining : 0;
-  };
+  }, []);
 
   const { pieChartData, pieChartConfig } = useMemo(() => {
     const partyTotals: { [name: string]: number } = {};
@@ -118,7 +118,7 @@ export default function ReportsPage() {
     });
 
     return { pieChartData: dynamicPieChartData, pieChartConfig: dynamicPieChartConfig };
-  }, [data]);
+  }, [data, calculateRemaining]);
 
   const topParties = useMemo(() => {
     const partyTotals: { [key: string]: { name: string, totalHutang: number, totalPiutang: number } } = {};
@@ -150,7 +150,7 @@ export default function ReportsPage() {
     });
 
     return flatList.sort((a, b) => b.amount - a.amount).slice(0, 5);
-  }, [data]);
+  }, [data, calculateRemaining]);
   
   const monthlyCashflowData = useMemo(() => {
     const today = new Date();

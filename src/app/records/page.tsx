@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import MainLayout from "@/components/layout/main-layout"
 import { getDebtRecords, addPayment, deleteDebtRecord } from "@/services/debt-service"
 import type { DebtRecord } from "@/lib/types"
@@ -138,12 +138,23 @@ export default function RecordsPage() {
     }).format(amount);
   };
 
-  const calculateRemaining = (record: DebtRecord): number => {
-    if (record.status === 'lunas') return 0;
+  const calculateRemaining = useCallback((record: DebtRecord | null): number => {
+    if (!record || record.status === 'lunas') return 0;
     const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
     const remaining = record.amount - totalPaid;
     return remaining > 0 ? remaining : 0;
-  };
+  }, []);
+
+  const remainingAmount = useMemo(() => calculateRemaining(selectedRecord), [selectedRecord, calculateRemaining]);
+
+  useEffect(() => {
+    if (selectedRecord) {
+      paymentForm.reset({
+        amount: remainingAmount,
+        date: new Date(),
+      });
+    }
+  }, [selectedRecord, remainingAmount, paymentForm]);
 
   const handleExportPDF = () => {
     if (data.length === 0) {
@@ -160,12 +171,12 @@ export default function RecordsPage() {
     const tableRows: (string | number)[][] = [];
 
     data.forEach(record => {
-        const remainingAmount = calculateRemaining(record);
+        const recordRemainingAmount = calculateRemaining(record);
         const recordRow = [
             record.name,
             record.type,
             formatCurrency(record.amount),
-            formatCurrency(remainingAmount),
+            formatCurrency(recordRemainingAmount),
             record.status,
             format(new Date(record.dueDate), "d MMM yyyy", { locale: localeId }),
         ];
@@ -190,9 +201,6 @@ export default function RecordsPage() {
 
   async function handlePaymentSubmit(values: z.infer<typeof paymentFormSchema>) {
     if (!selectedRecord) return;
-
-    const totalPaid = selectedRecord.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-    const remainingAmount = selectedRecord.amount - totalPaid;
 
     if (values.amount > remainingAmount) {
         paymentForm.setError("amount", {
@@ -249,9 +257,6 @@ export default function RecordsPage() {
         setIsDeleting(false);
     }
   }
-
-  const totalPaid = selectedRecord?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-  const remainingAmount = selectedRecord ? selectedRecord.amount - totalPaid : 0;
 
   if (loading) {
     return (

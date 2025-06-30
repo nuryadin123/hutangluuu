@@ -33,11 +33,6 @@ const barChartConfig = {
   },
 } satisfies ChartConfig;
 
-const pieChartConfig = {
-  hutang: { label: 'Hutang', color: 'hsl(var(--chart-2))' },
-  piutang: { label: 'Piutang', color: 'hsl(var(--chart-1))' },
-} satisfies ChartConfig;
-
 
 export default function ReportsPage() {
   const [data, setData] = useState<DebtRecord[]>([]);
@@ -64,18 +59,40 @@ export default function ReportsPage() {
     return remaining > 0 ? remaining : 0;
   };
 
-  const pieChartData = useMemo(() => {
-    const totalHutang = data
-      .filter((d) => d.type === 'hutang')
-      .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
-    const totalPiutang = data
-      .filter((d) => d.type === 'piutang')
-      .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
+  const { pieChartData, pieChartConfig } = useMemo(() => {
+    const partyTotals: { [name: string]: number } = {};
+    data.forEach(record => {
+      const remaining = calculateRemaining(record);
+      if (remaining > 0) {
+        partyTotals[record.name] = (partyTotals[record.name] || 0) + remaining;
+      }
+    });
 
-    return [
-        { name: 'Hutang', value: totalHutang, fill: 'var(--color-hutang)' },
-        { name: 'Piutang', value: totalPiutang, fill: 'var(--color-piutang)' },
+    const chartColors = [
+      'hsl(var(--chart-1))',
+      'hsl(var(--chart-2))',
+      'hsl(var(--chart-3))',
+      'hsl(var(--chart-4))',
+      'hsl(var(--chart-5))',
     ];
+
+    const sortedParties = Object.entries(partyTotals).sort((a, b) => b[1] - a[1]);
+    
+    const dynamicPieChartConfig: ChartConfig = {};
+    const dynamicPieChartData = sortedParties.map(([name, value], index) => {
+      const key = `party${index}`;
+      dynamicPieChartConfig[key] = {
+        label: name,
+        color: chartColors[index % chartColors.length],
+      };
+      return {
+        name: key,
+        value,
+        fill: `var(--color-${key})`,
+      };
+    });
+
+    return { pieChartData: dynamicPieChartData, pieChartConfig: dynamicPieChartConfig };
   }, [data]);
 
   const topParties = useMemo(() => {
@@ -173,7 +190,7 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Komposisi Hutang/Piutang</CardTitle>
-              <CardDescription>Perbandingan total sisa hutang dan piutang yang belum lunas.</CardDescription>
+              <CardDescription>Rincian sisa hutang dan piutang berdasarkan pihak.</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -263,3 +280,4 @@ export default function ReportsPage() {
     </MainLayout>
   );
 }
+

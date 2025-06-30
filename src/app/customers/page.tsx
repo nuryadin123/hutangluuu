@@ -119,8 +119,8 @@ export default function CustomersPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nama Pelanggan</TableHead>
-                                    <TableHead className="text-right">Total Sisa Hutang</TableHead>
-                                    <TableHead className="text-right">Total Sisa Piutang</TableHead>
+                                    <TableHead className="text-right">Jumlah Hutang</TableHead>
+                                    <TableHead className="text-right">Jumlah Piutang</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

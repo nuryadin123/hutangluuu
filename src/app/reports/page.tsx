@@ -1,3 +1,4 @@
+
 'use client';
 import MainLayout from '@/components/layout/main-layout';
 import {
@@ -63,9 +64,20 @@ export default function ReportsPage() {
     fetchData();
   }, []);
 
+  const calculateRemaining = (record: DebtRecord) => {
+    if (record.status === 'lunas') return 0;
+    const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+    const remaining = record.amount - totalPaid;
+    return remaining > 0 ? remaining : 0;
+  };
+
   const pieChartData = useMemo(() => {
-    const totalHutang = data.filter((d) => d.type === 'hutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
-    const totalPiutang = data.filter((d) => d.type === 'piutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalHutang = data
+      .filter((d) => d.type === 'hutang')
+      .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
+    const totalPiutang = data
+      .filter((d) => d.type === 'piutang')
+      .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
 
     return [
         { name: 'Hutang', value: totalHutang, fill: 'var(--color-hutang)' },
@@ -74,15 +86,37 @@ export default function ReportsPage() {
   }, [data]);
 
   const topParties = useMemo(() => {
-    const partyTotals: { [key: string]: { name: string, amount: number, type: 'hutang' | 'piutang' } } = {};
+    const partyTotals: { [key: string]: { name: string, totalHutang: number, totalPiutang: number } } = {};
+    
     data.forEach(item => {
-      if (!partyTotals[item.name]) {
-        partyTotals[item.name] = { name: item.name, amount: 0, type: item.type };
-      }
-      partyTotals[item.name].amount += item.amount;
+        const remaining = calculateRemaining(item);
+        if (remaining <= 0) return;
+
+        if (!partyTotals[item.name]) {
+            partyTotals[item.name] = { name: item.name, totalHutang: 0, totalPiutang: 0 };
+        }
+
+        if (item.type === 'hutang') {
+            partyTotals[item.name].totalHutang += remaining;
+        } else {
+            partyTotals[item.name].totalPiutang += remaining;
+        }
     });
-    return Object.values(partyTotals).sort((a, b) => b.amount - a.amount).slice(0, 5);
+
+    const flatList = Object.values(partyTotals).flatMap(party => {
+        const entries = [];
+        if (party.totalHutang > 0) {
+            entries.push({ name: party.name, amount: party.totalHutang, type: 'hutang' as const });
+        }
+        if (party.totalPiutang > 0) {
+            entries.push({ name: party.name, amount: party.totalPiutang, type: 'piutang' as const });
+        }
+        return entries;
+    });
+
+    return flatList.sort((a, b) => b.amount - a.amount).slice(0, 5);
   }, [data]);
+
 
   if (loading) {
     return (
@@ -111,7 +145,7 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Komposisi Hutang/Piutang</CardTitle>
-              <CardDescription>Perbandingan total hutang dan piutang yang belum lunas.</CardDescription>
+              <CardDescription>Perbandingan total sisa hutang dan piutang yang belum lunas.</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -141,13 +175,13 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Aliran Kas per Pihak</CardTitle>
-              <CardDescription>Analisis hutang dan piutang berdasarkan pihak terkait.</CardDescription>
+              <CardDescription>5 pihak teratas dengan sisa hutang atau piutang terbesar.</CardDescription>
             </CardHeader>
             <CardContent>
               {topParties.length > 0 ? (
                 <div className="space-y-4">
                   {topParties.map((item) => (
-                    <div key={item.name} className="flex items-center">
+                    <div key={`${item.name}-${item.type}`} className="flex items-center">
                       <div className="flex-1 space-y-1">
                         <p className="text-sm font-medium leading-none">{item.name}</p>
                         <p className="text-sm capitalize" style={{ color: item.type === 'hutang' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>{item.type}</p>

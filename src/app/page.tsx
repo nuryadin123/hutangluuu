@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -75,15 +76,27 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  const calculateRemaining = (record: DebtRecord) => {
+    if (record.status === 'lunas') return 0;
+    const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+    const remaining = record.amount - totalPaid;
+    return remaining > 0 ? remaining : 0;
+  };
+
   const totalHutang = data
     .filter((d) => d.type === 'hutang' && d.status === 'belum lunas')
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
   const totalPiutang = data
     .filter((d) => d.type === 'piutang' && d.status === 'belum lunas')
-    .reduce((acc, curr) => acc + curr.amount, 0);
+    .reduce((acc, curr) => acc + calculateRemaining(curr), 0);
+    
   const upcomingDues = data
-    .filter((d) => d.status === 'belum lunas' && !isPast(new Date(d.dueDate)))
+    .filter((d) => {
+        if (d.status === 'lunas' || isPast(new Date(d.dueDate))) return false;
+        return calculateRemaining(d) > 0;
+    })
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
   const recentTransactions = [...data]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
@@ -128,7 +141,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalHutang)}</div>
               <p className="text-xs text-muted-foreground">
-                Total hutang yang belum lunas
+                Total sisa hutang yang belum lunas
               </p>
             </CardContent>
           </Card>
@@ -142,7 +155,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalPiutang)}</div>
               <p className="text-xs text-muted-foreground">
-                Total piutang yang akan diterima
+                Total sisa piutang yang akan diterima
               </p>
             </CardContent>
           </Card>
@@ -220,7 +233,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Jatuh Tempo Terdekat</CardTitle>
-            <CardDescription>Daftar hutang/piutang yang akan jatuh tempo.</CardDescription>
+            <CardDescription>Daftar sisa hutang/piutang yang akan jatuh tempo.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -242,7 +255,7 @@ export default function Dashboard() {
                           {due.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(due.amount)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(calculateRemaining(due))}</TableCell>
                       <TableCell className="text-right">{format(new Date(due.dueDate), 'd MMM yyyy', { locale: localeId })}</TableCell>
                     </TableRow>
                   ))

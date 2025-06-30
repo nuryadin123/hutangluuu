@@ -17,10 +17,9 @@ import {
   LayoutDashboard,
   Wallet,
   FileText,
-  Settings,
+  Users,
   PlusCircle,
   FileBarChart,
-  Home,
 } from 'lucide-react';
 import Header from './header';
 import { Button } from '@/components/ui/button';
@@ -79,12 +78,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={isActive('/settings')}
-                tooltip={{ children: 'Pengaturan' }}
+                isActive={isActive('/customers')}
+                tooltip={{ children: 'Pelanggan' }}
               >
-                <Link href="/settings">
-                  <Settings />
-                  <span>Pengaturan</span>
+                <Link href="/customers">
+                  <Users />
+                  <span>Pelanggan</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

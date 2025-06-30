@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'DebtFlow',
+  title: 'Catatan Hutang',
   description: 'Mengelola hutang dan piutang dengan mudah.',
 };
 

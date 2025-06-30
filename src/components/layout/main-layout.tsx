@@ -34,7 +34,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
             <Wallet className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold">DebtFlow</h1>
+            <h1 className="text-xl font-bold">Catatan Hutang</h1>
           </div>
         </SidebarHeader>
         <SidebarContent>

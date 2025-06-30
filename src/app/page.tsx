@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -32,20 +31,11 @@ import {
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import MainLayout from '@/components/layout/main-layout';
-import { format, isPast } from 'date-fns';
+import { format, isPast, subMonths, addMonths } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { getDebtRecords } from '@/services/debt-service';
 import type { DebtRecord } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const chartData = [
-  { month: 'Jan', hutang: 186000, piutang: 80000 },
-  { month: 'Feb', hutang: 305000, piutang: 200000 },
-  { month: 'Mar', hutang: 237000, piutang: 120000 },
-  { month: 'Apr', hutang: 73000, piutang: 190000 },
-  { month: 'Mei', hutang: 209000, piutang: 130000 },
-  { month: 'Jun', hutang: 214000, piutang: 140000 },
-];
 
 const chartConfig = {
   piutang: {
@@ -75,6 +65,43 @@ export default function Dashboard() {
     }
     fetchData();
   }, []);
+
+  const monthlyCashflowData = useMemo(() => {
+    if (data.length === 0) return [];
+    
+    const today = new Date();
+    const sixMonthsAgo = subMonths(new Date(today.getFullYear(), today.getMonth(), 1), 5);
+
+    const monthlyTotals: { [key: string]: { hutang: number; piutang: number } } = {};
+    const monthLabels: { [key: string]: string } = {};
+
+    for (let i = 0; i < 6; i++) {
+        const monthDate = addMonths(sixMonthsAgo, i);
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthName = format(monthDate, 'MMM', { locale: localeId });
+        monthlyTotals[monthKey] = { hutang: 0, piutang: 0 };
+        monthLabels[monthKey] = monthName;
+    }
+
+    data.forEach(record => {
+        const recordDate = new Date(record.date);
+        if (recordDate >= sixMonthsAgo) {
+            const monthKey = format(recordDate, 'yyyy-MM');
+            if (monthlyTotals[monthKey]) {
+                if (record.type === 'hutang') {
+                    monthlyTotals[monthKey].hutang += record.amount;
+                } else {
+                    monthlyTotals[monthKey].piutang += record.amount;
+                }
+            }
+        }
+    });
+
+    return Object.entries(monthlyTotals).map(([monthKey, totals]) => ({
+        month: monthLabels[monthKey],
+        ...totals,
+    }));
+  }, [data]);
 
   const calculateRemaining = (record: DebtRecord) => {
     if (record.status === 'lunas') return 0;
@@ -169,7 +196,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="pl-2">
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <BarChart accessibilityLayer data={chartData}>
+                <BarChart accessibilityLayer data={monthlyCashflowData}>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="month"

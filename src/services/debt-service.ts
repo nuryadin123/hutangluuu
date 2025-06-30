@@ -30,7 +30,8 @@ export async function getDebtRecords(): Promise<DebtRecord[]> {
     return []; // No user logged in, return no records
   }
 
-  const q = query(debtCollectionRef, where('userId', '==', user.uid), orderBy('date', 'desc'));
+  // The orderBy clause was moved to client-side sorting to avoid needing a composite index.
+  const q = query(debtCollectionRef, where('userId', '==', user.uid));
   const querySnapshot = await getDocs(q);
   const records = querySnapshot.docs.map((doc) => {
     const data = doc.data();
@@ -51,6 +52,10 @@ export async function getDebtRecords(): Promise<DebtRecord[]> {
         })) || [],
     } as DebtRecord;
   });
+
+  // Sort records by date in descending order (newest first) on the client side.
+  records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return records;
 }
 

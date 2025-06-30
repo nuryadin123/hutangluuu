@@ -37,6 +37,7 @@ import MainLayout from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { addDebtRecord } from '@/services/debt-service';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Nama pihak harus diisi.' }),
@@ -68,19 +69,25 @@ export default function AddRecordPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    console.log(values);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await addDebtRecord(values);
       toast({
         title: 'Berhasil!',
         description: 'Catatan baru telah berhasil ditambahkan.',
-        variant: 'default',
       });
-      setIsSubmitting(false);
       router.push('/records');
-    }, 1500);
+    } catch (error) {
+      console.error('Error adding record:', error);
+      toast({
+        title: 'Gagal!',
+        description: 'Terjadi kesalahan saat menambahkan catatan.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

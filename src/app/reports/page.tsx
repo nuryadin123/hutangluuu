@@ -14,8 +14,10 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell } from 'recharts';
-import { DUMMY_DATA } from '@/lib/data';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { getDebtRecords } from '@/services/debt-service';
+import type { DebtRecord } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const barChartData = [
   { month: 'Jan', hutang: 1860, piutang: 800 },
@@ -44,15 +46,59 @@ const pieChartConfig = {
 
 
 export default function ReportsPage() {
+  const [data, setData] = useState<DebtRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const records = await getDebtRecords();
+        setData(records);
+      } catch (error) {
+        console.error("Failed to fetch records:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   const pieChartData = useMemo(() => {
-    const totalHutang = DUMMY_DATA.filter((d) => d.type === 'hutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
-    const totalPiutang = DUMMY_DATA.filter((d) => d.type === 'piutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalHutang = data.filter((d) => d.type === 'hutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalPiutang = data.filter((d) => d.type === 'piutang' && d.status === 'belum lunas').reduce((acc, curr) => acc + curr.amount, 0);
 
     return [
         { name: 'Hutang', value: totalHutang, fill: 'var(--color-hutang)' },
         { name: 'Piutang', value: totalPiutang, fill: 'var(--color-piutang)' },
     ];
-  }, []);
+  }, [data]);
+
+  const topParties = useMemo(() => {
+    const partyTotals: { [key: string]: { name: string, amount: number, type: 'hutang' | 'piutang' } } = {};
+    data.forEach(item => {
+      if (!partyTotals[item.name]) {
+        partyTotals[item.name] = { name: item.name, amount: 0, type: item.type };
+      }
+      partyTotals[item.name].amount += item.amount;
+    });
+    return Object.values(partyTotals).sort((a, b) => b.amount - a.amount).slice(0, 5);
+  }, [data]);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-pulse">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-full max-w-lg" />
+          <div className="grid gap-4 md:grid-cols-2 mt-4">
+            <Card><CardHeader><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent className="flex justify-center items-center"><Skeleton className="mx-auto aspect-square h-[250px] rounded-full" /></CardContent></Card>
+            <Card><CardHeader><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent><div className="space-y-4">{[...Array(4)].map((_, i) => <div key={i} className="flex items-center"><div className="flex-1 space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-16" /></div><Skeleton className="h-6 w-20" /></div>)}</div></CardContent></Card>
+          </div>
+          <Card className="mt-4"><CardHeader><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+        </div>
+      </MainLayout>
+    )
+  }
 
   return (
     <MainLayout>
@@ -98,19 +144,25 @@ export default function ReportsPage() {
               <CardDescription>Analisis hutang dan piutang berdasarkan pihak terkait.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {DUMMY_DATA.slice(0, 4).map((item) => (
-                  <div key={item.id} className="flex items-center">
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">{item.name}</p>
-                      <p className="text-sm capitalize" style={{ color: item.type === 'hutang' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>{item.type}</p>
+              {topParties.length > 0 ? (
+                <div className="space-y-4">
+                  {topParties.map((item) => (
+                    <div key={item.name} className="flex items-center">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">{item.name}</p>
+                        <p className="text-sm capitalize" style={{ color: item.type === 'hutang' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>{item.type}</p>
+                      </div>
+                      <div className="font-medium">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.amount)}
+                      </div>
                     </div>
-                    <div className="font-medium">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.amount)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                 <div className="text-center text-muted-foreground h-24 flex items-center justify-center">
+                  Belum ada data.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

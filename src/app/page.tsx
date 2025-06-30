@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -29,10 +30,12 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
-import { DUMMY_DATA } from '@/lib/data';
 import MainLayout from '@/components/layout/main-layout';
 import { format, isPast } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import { getDebtRecords } from '@/services/debt-service';
+import type { DebtRecord } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chartData = [
   { month: 'Jan', hutang: 186000, piutang: 80000 },
@@ -55,18 +58,35 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function Dashboard() {
-  const totalHutang = DUMMY_DATA.filter(
-    (d) => d.type === 'hutang' && d.status === 'belum lunas'
-  ).reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPiutang = DUMMY_DATA.filter(
-    (d) => d.type === 'piutang' && d.status === 'belum lunas'
-  ).reduce((acc, curr) => acc + curr.amount, 0);
-  const upcomingDues = DUMMY_DATA.filter(
-    (d) => d.status === 'belum lunas' && !isPast(new Date(d.dueDate))
-  ).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  const recentTransactions = [...DUMMY_DATA].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  ).slice(0, 5);
+  const [data, setData] = useState<DebtRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const records = await getDebtRecords();
+        setData(records);
+      } catch (error) {
+        console.error("Failed to fetch records:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const totalHutang = data
+    .filter((d) => d.type === 'hutang' && d.status === 'belum lunas')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const totalPiutang = data
+    .filter((d) => d.type === 'piutang' && d.status === 'belum lunas')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const upcomingDues = data
+    .filter((d) => d.status === 'belum lunas' && !isPast(new Date(d.dueDate)))
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  const recentTransactions = [...data]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -75,6 +95,25 @@ export default function Dashboard() {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+  
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-pulse">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-40 mt-2" /></CardContent></Card>
+            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-40 mt-2" /></CardContent></Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-4"><CardHeader><Skeleton className="h-6 w-32" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent><Skeleton className="h-[300px] w-full" /></CardContent></Card>
+            <Card className="col-span-4 lg:col-span-3"><CardHeader><Skeleton className="h-6 w-40" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent><div className="space-y-4">{[...Array(5)].map((_, i) => <div key={i} className="flex items-center"><Skeleton className="h-10 w-10 rounded-full mr-4" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-32" /></div><Skeleton className="h-6 w-20 ml-auto" /></div>)}</div></CardContent></Card>
+          </div>
+          <Card><CardHeader><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-full mt-2" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
+        </div>
+      </MainLayout>
+    )
+  }
 
   return (
     <MainLayout>
@@ -143,31 +182,37 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentTransactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center">
-                    <div className="p-2 bg-muted rounded-full mr-4">
-                      {tx.type === 'hutang' ? (
-                        <ArrowDownCircle className="h-5 w-5 text-destructive" />
-                      ) : (
-                        <ArrowUpCircle className="h-5 w-5 text-primary" />
-                      )}
+              {recentTransactions.length > 0 ? (
+                <div className="space-y-4">
+                  {recentTransactions.map((tx) => (
+                    <div key={tx.id} className="flex items-center">
+                      <div className="p-2 bg-muted rounded-full mr-4">
+                        {tx.type === 'hutang' ? (
+                          <ArrowDownCircle className="h-5 w-5 text-destructive" />
+                        ) : (
+                          <ArrowUpCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {tx.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {tx.description}
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium text-right">
+                        {formatCurrency(tx.amount)}
+                        <p className="text-xs text-muted-foreground">{format(new Date(tx.date), 'd MMM', { locale: localeId })}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {tx.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {tx.description}
-                      </p>
-                    </div>
-                    <div className="ml-auto font-medium text-right">
-                      {formatCurrency(tx.amount)}
-                      <p className="text-xs text-muted-foreground">{format(new Date(tx.date), 'd MMM', { locale: localeId })}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground h-24 flex items-center justify-center">
+                  Belum ada transaksi.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

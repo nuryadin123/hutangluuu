@@ -1,12 +1,12 @@
 import MainLayout from "@/components/layout/main-layout"
-import { DUMMY_DATA } from "@/lib/data"
-import { DebtRecord } from "@/lib/types"
+import { getDebtRecords } from "@/services/debt-service"
+import type { DebtRecord } from "@/lib/types"
 import { DataTable } from "./data-table"
 import { columns } from "./columns"
 
 async function getData(): Promise<DebtRecord[]> {
   // Fetch data from your API here.
-  return DUMMY_DATA
+  return await getDebtRecords();
 }
 
 export default async function RecordsPage() {

@@ -1,3 +1,5 @@
+'use client';
+
 import MainLayout from '@/components/layout/main-layout';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';

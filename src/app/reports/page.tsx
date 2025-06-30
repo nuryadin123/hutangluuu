@@ -103,7 +103,7 @@ export default function ReportsPage() {
                   <div key={item.id} className="flex items-center">
                     <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium leading-none">{item.name}</p>
-                      <p className="text-sm capitalize" style={{ color: item.type === 'hutang' ? 'hsl(var(--chart-2))' : 'hsl(var(--chart-1))'}}>{item.type}</p>
+                      <p className="text-sm capitalize" style={{ color: item.type === 'hutang' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}}>{item.type}</p>
                     </div>
                     <div className="font-medium">
                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.amount)}

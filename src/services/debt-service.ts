@@ -1,3 +1,4 @@
+
 import { auth, db } from '@/lib/firebase';
 import type { DebtRecord, Payment } from '@/lib/types';
 import {
@@ -43,6 +44,7 @@ export async function getDebtRecords(): Promise<DebtRecord[]> {
       type: data.type,
       status: data.status,
       description: data.description,
+      userId: data.userId,
       date: (data.date as Timestamp).toDate().toISOString().split('T')[0],
       dueDate: (data.dueDate as Timestamp).toDate().toISOString().split('T')[0],
       payments:
@@ -84,28 +86,49 @@ export async function updateDebtRecord(
   id: string,
   updates: Partial<DebtRecord>
 ) {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User must be logged in to update a record.');
+  }
   const recordDoc = doc(db, 'debt-records', id);
-  // TODO: Add security rule to ensure only the owner can update
+  const docSnap = await getDoc(recordDoc);
+
+  if (!docSnap.exists() || docSnap.data().userId !== user.uid) {
+    throw new Error('Permission denied or record not found.');
+  }
+
   await updateDoc(recordDoc, updates);
 }
 
 export async function deleteDebtRecord(id: string) {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User must be logged in to delete a record.');
+  }
   const recordDoc = doc(db, 'debt-records', id);
-  // TODO: Add security rule to ensure only the owner can delete
+  const docSnap = await getDoc(recordDoc);
+
+  if (!docSnap.exists() || docSnap.data().userId !== user.uid) {
+     throw new Error('Permission denied or record not found.');
+  }
+
   await deleteDoc(recordDoc);
 }
 
 export async function addPayment(recordId: string, payment: AddPaymentInput): Promise<DebtRecord> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User must be logged in to add a payment.');
+  }
+  
   const recordRef = doc(db, 'debt-records', recordId);
   const recordSnap = await getDoc(recordRef);
 
-  if (!recordSnap.exists()) {
-    throw new Error('Record not found');
+  if (!recordSnap.exists() || recordSnap.data().userId !== user.uid) {
+    throw new Error('Permission denied or record not found.');
   }
 
-  // TODO: Add security rule to ensure only the owner can add payments
   const recordData = recordSnap.data();
-  // Ensure payments is an array before reducing
   const existingPayments = recordData.payments || [];
   const totalPaid = existingPayments.reduce((sum: number, p: Payment) => sum + p.amount, 0) + payment.amount;
 

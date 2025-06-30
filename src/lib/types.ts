@@ -1,3 +1,4 @@
+
 export type Payment = {
   amount: number;
   date: string;
@@ -15,4 +16,5 @@ export type DebtRecord = {
   dueDate: string;
   description: string;
   payments?: Payment[];
+  userId: string;
 };

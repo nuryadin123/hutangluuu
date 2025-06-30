@@ -29,8 +29,16 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, FileDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 const paymentFormSchema = z.object({
   amount: z.coerce.number().positive({ message: "Jumlah harus lebih dari 0." }),
@@ -74,6 +82,49 @@ export default function RecordsPage() {
     }).format(amount);
   };
 
+  const calculateRemaining = (record: DebtRecord): number => {
+    if (record.status === 'lunas') return 0;
+    const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+    const remaining = record.amount - totalPaid;
+    return remaining > 0 ? remaining : 0;
+  };
+
+  const handleExportPDF = () => {
+    if (data.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Gagal Ekspor',
+        description: 'Tidak ada data untuk diekspor.',
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const tableColumns = ["Pihak", "Jenis", "Jumlah Awal", "Sisa Tagihan", "Status", "Jatuh Tempo"];
+    const tableRows: (string | number)[][] = [];
+
+    data.forEach(record => {
+        const remainingAmount = calculateRemaining(record);
+        const recordRow = [
+            record.name,
+            record.type,
+            formatCurrency(record.amount),
+            formatCurrency(remainingAmount),
+            record.status,
+            format(new Date(record.dueDate), "d MMM yyyy", { locale: localeId }),
+        ];
+        tableRows.push(recordRow);
+    });
+
+    doc.text("Laporan Hutang & Piutang", 14, 15);
+    doc.autoTable({
+        head: [tableColumns],
+        body: tableRows,
+        startY: 20,
+    });
+    doc.save("laporan_hutang_piutang.pdf");
+  };
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setSelectedRecord(null);
@@ -107,7 +158,6 @@ export default function RecordsPage() {
       paymentForm.reset({ date: new Date(), amount: 0 });
 
       if (updatedRecord.status === 'lunas') {
-        // Keep the dialog open for a bit to show success, then close
         setTimeout(() => {
           setSelectedRecord(null);
         }, 1500)
@@ -151,8 +201,16 @@ export default function RecordsPage() {
   return (
     <MainLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <h2 className="text-3xl font-bold tracking-tight">Catatan Hutang & Piutang</h2>
-        <p className="text-muted-foreground">Kelola semua catatan hutang dan piutang Anda di satu tempat.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Catatan Hutang & Piutang</h2>
+            <p className="text-muted-foreground">Kelola semua catatan hutang dan piutang Anda di satu tempat.</p>
+          </div>
+          <Button onClick={handleExportPDF} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
         <DataTable columns={columns} data={data} onViewDetails={setSelectedRecord} />
       </div>
 

@@ -21,6 +21,17 @@ import type { DebtRecord } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { subMonths, addMonths, format, isAfter } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { useToast } from '@/hooks/use-toast';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 const barChartConfig = {
   piutang: {
@@ -37,6 +48,7 @@ const barChartConfig = {
 export default function ReportsPage() {
   const [data, setData] = useState<DebtRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
@@ -144,7 +156,7 @@ export default function ReportsPage() {
 
     data.forEach(record => {
         const recordDate = new Date(record.date);
-        if (isAfter(recordDate, subMonths(sixMonthsAgo, 1))) { // Ensure we capture all relevant records
+        if (isAfter(recordDate, subMonths(sixMonthsAgo, 1))) {
             const monthKey = format(recordDate, 'yyyy-MM');
             if (monthlyTotals[monthKey]) {
                 if (record.type === 'hutang') {
@@ -161,6 +173,53 @@ export default function ReportsPage() {
         ...totals,
     }));
   }, [data]);
+
+  const handleExportPDF = () => {
+    if (data.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Gagal Ekspor',
+        description: 'Tidak ada data untuk diekspor.',
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+
+    doc.text("Laporan & Analisis", 14, 15);
+
+    // Table 1: Aliran Kas per Pihak
+    if (topParties.length > 0) {
+      doc.text("Aliran Kas per Pihak (5 Teratas)", 14, 25);
+      doc.autoTable({
+          head: [['Pihak', 'Jenis', 'Sisa Tagihan']],
+          body: topParties.map(item => [
+              item.name,
+              item.type,
+              formatCurrency(item.amount)
+          ]),
+          startY: 30,
+      });
+    }
+
+    // Table 2: Aliran Kas Bulanan
+    if (monthlyCashflowData.length > 0) {
+      doc.addPage();
+      doc.text("Aliran Kas Bulanan (6 Bulan Terakhir)", 14, 15);
+      doc.autoTable({
+          head: [['Bulan', 'Total Hutang Tercatat', 'Total Piutang Tercatat']],
+          body: monthlyCashflowData.map(item => [
+              item.month,
+              formatCurrency(item.hutang),
+              formatCurrency(item.piutang)
+          ]),
+          startY: 20,
+      });
+    }
+
+    doc.save("laporan_analisis.pdf");
+  };
 
 
   if (loading) {
@@ -182,10 +241,18 @@ export default function ReportsPage() {
   return (
     <MainLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <h2 className="text-3xl font-bold tracking-tight">Laporan & Analisis</h2>
-        <p className="text-muted-foreground">
-          Dapatkan wawasan tentang kesehatan keuangan Anda melalui visualisasi data.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Laporan & Analisis</h2>
+            <p className="text-muted-foreground">
+              Dapatkan wawasan tentang kesehatan keuangan Anda melalui visualisasi data.
+            </p>
+          </div>
+           <Button onClick={handleExportPDF} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -280,4 +347,3 @@ export default function ReportsPage() {
     </MainLayout>
   );
 }
-

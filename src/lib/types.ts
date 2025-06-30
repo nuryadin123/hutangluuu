@@ -1,3 +1,9 @@
+export type Payment = {
+  amount: number;
+  date: string;
+  notes?: string;
+};
+
 export type DebtRecord = {
   id: string;
   name: string;
@@ -8,4 +14,5 @@ export type DebtRecord = {
   date: string;
   dueDate: string;
   description: string;
+  payments?: Payment[];
 };

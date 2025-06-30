@@ -167,29 +167,85 @@ export default function RecordsPage() {
     }
 
     const doc = new jsPDF();
-    const tableColumns = ["Pihak", "Jenis", "Jumlah Awal", "Sisa Tagihan", "Status", "Jatuh Tempo"];
-    const tableRows: (string | number)[][] = [];
+    let startY = 20;
 
-    data.forEach(record => {
-        const recordRemainingAmount = calculateRemaining(record);
-        const recordRow = [
-            record.name,
-            record.type,
-            formatCurrency(record.amount),
-            formatCurrency(recordRemainingAmount),
-            record.status,
-            format(new Date(record.dueDate), "d MMM yyyy", { locale: localeId }),
-        ];
-        tableRows.push(recordRow);
+    doc.setFontSize(18);
+    doc.text('Laporan Rinci Hutang & Piutang', 14, startY);
+    startY += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Tanggal Laporan: ${format(new Date(), "d MMMM yyyy", { locale: localeId })}`, 14, startY);
+    startY += 10;
+
+
+    data.forEach((record, index) => {
+      // Estimate space needed and add page break if necessary
+      const recordSpaceNeeded = 60 + (record.payments?.length || 0) * 10;
+      if (startY + recordSpaceNeeded > 280) {
+        doc.addPage();
+        startY = 20;
+      }
+      
+      // Add a separator line for clarity
+      if (index > 0) {
+         doc.setDrawColor(220);
+         doc.line(14, startY - 5, 196, startY - 5);
+      }
+
+      const recordDetails = [
+        ['Pihak', record.name],
+        ['Jenis', record.type],
+        ['Jumlah Awal', formatCurrency(record.amount)],
+        ['Sisa Tagihan', formatCurrency(calculateRemaining(record))],
+        ['Status', record.status],
+        ['Tanggal', format(new Date(record.date), 'd MMM yyyy', { locale: localeId })],
+        ['Jatuh Tempo', format(new Date(record.dueDate), 'd MMM yyyy', { locale: localeId })],
+        ['Deskripsi', record.description || '-'],
+      ];
+
+      doc.autoTable({
+        body: recordDetails,
+        startY: startY,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 2, lineWidth: 0.1, lineColor: [220, 220, 220] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 40 },
+          1: { cellWidth: 'auto' },
+        },
+        didDrawPage: (data) => {
+            data.settings.margin.top = 15;
+        }
+      });
+      startY = (doc as any).autoTable.previous.finalY;
+
+      if (record.payments && record.payments.length > 0) {
+        startY += 2;
+        doc.autoTable({
+          head: [['Tanggal Pembayaran', 'Jumlah Dibayar']],
+          body: record.payments.map(p => [
+            format(new Date(p.date), 'd MMM yyyy', { locale: localeId }),
+            formatCurrency(p.amount)
+          ]),
+          startY: startY,
+          theme: 'striped',
+          styles: { fontSize: 9 },
+          headStyles: {
+            fillColor: [245, 245, 245],
+            textColor: 20,
+            fontSize: 9.5,
+          },
+          columnStyles: {
+            1: { halign: 'right' },
+          },
+          margin: { left: 20, right: 20 },
+        });
+        startY = (doc as any).autoTable.previous.finalY;
+      }
+
+      startY += 15;
     });
 
-    doc.text("Laporan Hutang & Piutang", 14, 15);
-    doc.autoTable({
-        head: [tableColumns],
-        body: tableRows,
-        startY: 20,
-    });
-    doc.save("laporan_hutang_piutang.pdf");
+    doc.save("laporan_rinci_catatan.pdf");
   };
 
   const handleOpenChange = (open: boolean) => {

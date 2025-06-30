@@ -91,8 +91,24 @@ export const columns: ColumnDef<DebtRecord>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
-      return <Badge variant={status === 'lunas' ? 'secondary' : 'outline'}>{status}</Badge>
+      const record = row.original;
+      if (record.status === 'lunas') {
+        return <Badge variant="secondary">Lunas</Badge>;
+      }
+
+      const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      const remainingAmount = record.amount - totalPaid;
+
+      return (
+        <div>
+          <Badge variant="outline">{record.status}</Badge>
+          {remainingAmount > 0 && (
+             <div className="text-xs text-muted-foreground pt-1">
+              Sisa: {formatCurrency(remainingAmount)}
+            </div>
+          )}
+        </div>
+      )
     },
   },
   {

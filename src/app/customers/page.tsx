@@ -81,14 +81,12 @@ export default function CustomersPage() {
                                 <TableRow>
                                     <TableHead><Skeleton className="h-5 w-24" /></TableHead>
                                     <TableHead><Skeleton className="h-5 w-32" /></TableHead>
-                                    <TableHead><Skeleton className="h-5 w-32" /></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {[...Array(5)].map((_, i) => (
                                    <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-3/5" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-4/5" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-4/5" /></TableCell>
                                    </TableRow>
                                 ))}
@@ -107,7 +105,7 @@ export default function CustomersPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <h2 className="text-3xl font-bold tracking-tight">Daftar Pelanggan</h2>
             <p className="text-muted-foreground">
-              Ringkasan sisa hutang dan piutang untuk setiap pelanggan.
+              Ringkasan sisa piutang untuk setiap pelanggan.
             </p>
             <Card>
                 <CardHeader>
@@ -119,7 +117,6 @@ export default function CustomersPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nama Pelanggan</TableHead>
-                                    <TableHead className="text-right">Jumlah Hutang</TableHead>
                                     <TableHead className="text-right">Jumlah Piutang</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -128,13 +125,12 @@ export default function CustomersPage() {
                                     customers.map((customer) => (
                                         <TableRow key={customer.name}>
                                             <TableCell className="font-medium">{customer.name}</TableCell>
-                                            <TableCell className="text-right text-destructive font-mono">{formatCurrency(customer.totalHutang)}</TableCell>
                                             <TableCell className="text-right text-primary font-mono">{formatCurrency(customer.totalPiutang)}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={3} className="text-center h-24">Tidak ada data pelanggan dengan sisa tagihan.</TableCell>
+                                        <TableCell colSpan={2} className="text-center h-24">Tidak ada data pelanggan dengan sisa tagihan.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

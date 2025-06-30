@@ -84,7 +84,7 @@ export default function RecordsPage() {
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       date: new Date(),
-      amount: 0,
+      amount: '' as any,
     },
   });
 
@@ -150,11 +150,11 @@ export default function RecordsPage() {
   useEffect(() => {
     if (selectedRecord) {
       paymentForm.reset({
-        amount: remainingAmount,
+        amount: '' as any,
         date: new Date(),
       });
     }
-  }, [selectedRecord, remainingAmount, paymentForm]);
+  }, [selectedRecord, paymentForm]);
 
   const handleExportPDF = () => {
     if (data.length === 0) {
@@ -199,7 +199,7 @@ export default function RecordsPage() {
         ['Sisa Tagihan', formatCurrency(calculateRemaining(record))],
         ['Status', record.status],
         ['Tanggal', format(new Date(record.date), 'd MMM yyyy', { locale: localeId })],
-        ['Jatuh Tempo', format(new Date(record.dueDate), 'd MMM yyyy', { locale: localeId })],
+        ['Jatuh Tempo', format(new Date(record.dueDate), 'd MMMM yyyy', { locale: localeId })],
         ['Deskripsi', record.description || '-'],
       ];
 
@@ -251,7 +251,7 @@ export default function RecordsPage() {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setSelectedRecord(null);
-      paymentForm.reset({ date: new Date(), amount: 0 });
+      paymentForm.reset({ date: new Date(), amount: '' as any });
     }
   };
 
@@ -275,7 +275,7 @@ export default function RecordsPage() {
       setSelectedRecord(updatedRecord);
       
       toast({ title: "Sukses", description: "Pembayaran berhasil dicatat." });
-      paymentForm.reset({ date: new Date(), amount: 0 });
+      paymentForm.reset({ date: new Date(), amount: '' as any });
 
       if (updatedRecord.status === 'lunas') {
         setTimeout(() => {

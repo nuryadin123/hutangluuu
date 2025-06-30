@@ -5,12 +5,14 @@ import MainLayout from "@/components/layout/main-layout";
 import { getDebtRecords } from "@/services/debt-service";
 import type { DebtRecord } from "@/lib/types";
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
 
 interface CustomerSummary {
   name: string;
-  totalHutang: number;
   totalPiutang: number;
 }
 
@@ -20,6 +22,13 @@ const formatCurrency = (amount: number) => {
     currency: 'IDR',
     minimumFractionDigits: 0,
   }).format(amount);
+};
+
+const calculateRemaining = (record: DebtRecord) => {
+  if (record.status === 'lunas') return 0;
+  const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+  const remaining = record.amount - totalPaid;
+  return remaining > 0 ? remaining : 0;
 };
 
 export default function CustomersPage() {
@@ -34,25 +43,20 @@ export default function CustomersPage() {
         const customerData: { [key: string]: CustomerSummary } = {};
 
         records.forEach(record => {
-          if (record.status === 'lunas') return;
-
-          if (!customerData[record.name]) {
-            customerData[record.name] = { name: record.name, totalHutang: 0, totalPiutang: 0 };
-          }
-
-          const totalPaid = record.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-          const remainingAmount = record.amount - totalPaid;
+          const remainingAmount = calculateRemaining(record);
 
           if (remainingAmount <= 0) return;
-
-          if (record.type === 'hutang') {
-            customerData[record.name].totalHutang += remainingAmount;
-          } else { // piutang
+          
+          if (!customerData[record.name]) {
+            customerData[record.name] = { name: record.name, totalPiutang: 0 };
+          }
+          
+          if (record.type === 'piutang') {
             customerData[record.name].totalPiutang += remainingAmount;
           }
         });
         
-        const customerList = Object.values(customerData).filter(c => c.totalHutang > 0 || c.totalPiutang > 0).sort((a,b) => a.name.localeCompare(b.name));
+        const customerList = Object.values(customerData).filter(c => c.totalPiutang > 0).sort((a,b) => a.name.localeCompare(b.name));
         setCustomers(customerList);
 
       } catch (error) {
@@ -103,10 +107,20 @@ export default function CustomersPage() {
   return (
     <MainLayout>
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <h2 className="text-3xl font-bold tracking-tight">Daftar Pelanggan</h2>
-            <p className="text-muted-foreground">
-              Ringkasan sisa piutang untuk setiap pelanggan.
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Daftar Pelanggan</h2>
+                <p className="text-muted-foreground">
+                  Ringkasan sisa piutang untuk setiap pelanggan.
+                </p>
+              </div>
+              <Button asChild>
+                  <Link href="/add">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Tambah Catatan
+                  </Link>
+              </Button>
+            </div>
             <Card>
                 <CardHeader>
                     <CardTitle>Ringkasan Pelanggan</CardTitle>

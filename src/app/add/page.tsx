@@ -58,8 +58,11 @@ export default function AddRecordPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const cardRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isDragging = useRef(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -96,27 +99,46 @@ export default function AddRecordPage() {
 
   const handleTouchStart = (e: ReactTouchEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    // Don't start a swipe if the user is interacting with form elements
     if (target.closest('input, button, textarea, [role="button"], [role="option"], [role="gridcell"]')) {
-      touchStartX.current = 0;
       return;
     }
     
     touchStartX.current = e.targetTouches[0].clientX;
-    if (cardRef.current) {
-      cardRef.current.style.transition = 'none';
-    }
+    touchStartY.current = e.targetTouches[0].clientY;
+    isDragging.current = false;
   };
 
   const handleTouchMove = (e: ReactTouchEvent<HTMLDivElement>) => {
-    if (cardRef.current && touchStartX.current !== 0) {
-      const currentX = e.targetTouches[0].clientX;
-      const diff = currentX - touchStartX.current;
-      cardRef.current.style.transform = `translateX(${diff}px)`;
+    if (touchStartX.current === 0) return; // Swipe didn't start on a valid area
+
+    const currentX = e.targetTouches[0].clientX;
+    const currentY = e.targetTouches[0].clientY;
+    const diffX = currentX - touchStartX.current;
+    const diffY = currentY - touchStartY.current;
+
+    // Determine if this is a horizontal swipe or a vertical scroll
+    if (!isDragging.current) {
+      // Check if horizontal movement is more significant than vertical
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+        isDragging.current = true;
+        if (cardRef.current) {
+          cardRef.current.style.transition = 'none';
+        }
+      } else if (Math.abs(diffY) > 10) {
+        // It's a vertical scroll, so we stop tracking for this touch sequence.
+        touchStartX.current = 0;
+        touchStartY.current = 0;
+      }
+    }
+    
+    if (isDragging.current && cardRef.current) {
+      cardRef.current.style.transform = `translateX(${diffX}px)`;
     }
   };
 
   const handleTouchEnd = () => {
-    if (cardRef.current && touchStartX.current !== 0) {
+    if (isDragging.current && cardRef.current) {
       const transformMatrix = window.getComputedStyle(cardRef.current).getPropertyValue('transform');
       const currentTranslateX = transformMatrix !== 'none' ? new DOMMatrix(transformMatrix).m41 : 0;
       const cardWidth = cardRef.current.offsetWidth;
@@ -125,16 +147,22 @@ export default function AddRecordPage() {
       cardRef.current.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
 
       if (Math.abs(currentTranslateX) > threshold) {
+        // Swipe successful
         cardRef.current.style.transform = `translateX(${Math.sign(currentTranslateX) * cardWidth}px)`;
         cardRef.current.style.opacity = '0';
         setTimeout(() => {
           router.back();
         }, 300);
       } else {
+        // Snap back
         cardRef.current.style.transform = 'translateX(0px)';
       }
     }
+
+    // Reset all states
     touchStartX.current = 0;
+    touchStartY.current = 0;
+    isDragging.current = false;
   };
 
   return (

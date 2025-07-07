@@ -35,7 +35,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import MainLayout from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState } from 'react';
+import { useState, useRef, type TouchEvent as ReactTouchEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { addDebtRecord } from '@/services/debt-service';
 
@@ -58,6 +58,9 @@ export default function AddRecordPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -91,11 +94,60 @@ export default function AddRecordPage() {
     }
   }
 
+  const handleTouchStart = (e: ReactTouchEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('input, button, textarea, [role="button"], [role="option"], [role="gridcell"]')) {
+      touchStartX.current = 0;
+      return;
+    }
+    
+    touchStartX.current = e.targetTouches[0].clientX;
+    if (cardRef.current) {
+      cardRef.current.style.transition = 'none';
+    }
+  };
+
+  const handleTouchMove = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (cardRef.current && touchStartX.current !== 0) {
+      const currentX = e.targetTouches[0].clientX;
+      const diff = currentX - touchStartX.current;
+      cardRef.current.style.transform = `translateX(${diff}px)`;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (cardRef.current && touchStartX.current !== 0) {
+      const transformMatrix = window.getComputedStyle(cardRef.current).getPropertyValue('transform');
+      const currentTranslateX = transformMatrix !== 'none' ? new DOMMatrix(transformMatrix).m41 : 0;
+      const cardWidth = cardRef.current.offsetWidth;
+      const threshold = cardWidth / 3;
+
+      cardRef.current.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+
+      if (Math.abs(currentTranslateX) > threshold) {
+        cardRef.current.style.transform = `translateX(${Math.sign(currentTranslateX) * cardWidth}px)`;
+        cardRef.current.style.opacity = '0';
+        setTimeout(() => {
+          router.back();
+        }, 300);
+      } else {
+        cardRef.current.style.transform = 'translateX(0px)';
+      }
+    }
+    touchStartX.current = 0;
+  };
+
   return (
     <MainLayout>
       <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8">
         <h2 className="text-3xl font-bold tracking-tight">Tambah Catatan Baru</h2>
-        <Card>
+        <Card
+          ref={cardRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="touch-pan-y"
+        >
           <CardHeader>
             <CardTitle>Detail Transaksi</CardTitle>
           </CardHeader>

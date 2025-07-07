@@ -58,6 +58,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import FloatingAddButton from '@/components/ui/floating-add-button';
 
 
 declare module 'jspdf' {
@@ -563,6 +564,7 @@ export default function RecordsPage() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+      <FloatingAddButton />
     </MainLayout>
   )
 }

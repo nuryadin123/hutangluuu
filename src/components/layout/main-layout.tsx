@@ -27,7 +27,6 @@ import Header from './header';
 import { Button } from '@/components/ui/button';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import FloatingAddButton from '../ui/floating-add-button';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -143,7 +142,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <main className="flex-1 animate-content-show">{children}</main>
         </div>
-        <FloatingAddButton />
       </SidebarInset>
     </SidebarProvider>
   );

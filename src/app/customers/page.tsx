@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import FloatingAddButton from '@/components/ui/floating-add-button';
 
 
 interface CustomerSummary {
@@ -158,6 +159,7 @@ export default function CustomersPage() {
                 </CardContent>
             </Card>
         </div>
+        <FloatingAddButton />
     </MainLayout>
   )
 }

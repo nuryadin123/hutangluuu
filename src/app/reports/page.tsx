@@ -256,7 +256,7 @@ export default function ReportsPage() {
       <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Laporan & Analisis</h2>
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Laporan & Analisis</h2>
             <p className="text-muted-foreground">
               Dapatkan wawasan tentang kesehatan keuangan Anda melalui visualisasi data.
             </p>
@@ -275,7 +275,7 @@ export default function ReportsPage() {
             <CardContent>
               <ChartContainer
                 config={pieChartConfig}
-                className="mx-auto aspect-square h-[250px]"
+                className="mx-auto aspect-square h-[200px] sm:h-[250px]"
               >
                 <PieChart>
                   <ChartTooltip
@@ -333,7 +333,7 @@ export default function ReportsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={barChartConfig} className="h-[300px] w-full">
+            <ChartContainer config={barChartConfig} className="h-[250px] w-full sm:h-[300px]">
               <BarChart data={monthlyCashflowData}>
                 <CartesianGrid vertical={false} />
                 <XAxis

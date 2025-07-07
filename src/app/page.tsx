@@ -152,7 +152,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-pulse">
+        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6 animate-pulse">
           <Skeleton className="h-8 w-48" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-40 mt-2" /></CardContent></Card>
@@ -170,7 +170,7 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
         <h2 className="text-3xl font-bold tracking-tight">Dasbor</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -280,7 +280,7 @@ export default function Dashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Pihak</TableHead>
-                  <TableHead>Jenis</TableHead>
+                  <TableHead className="hidden sm:table-cell">Jenis</TableHead>
                   <TableHead className="text-right">Jumlah</TableHead>
                   <TableHead className="text-right">Jatuh Tempo</TableHead>
                 </TableRow>
@@ -289,8 +289,15 @@ export default function Dashboard() {
                 {upcomingDues.length > 0 ? (
                   upcomingDues.map((due) => (
                     <TableRow key={due.id}>
-                      <TableCell>{due.name}</TableCell>
                       <TableCell>
+                        <div className="font-medium">{due.name}</div>
+                        <div className="block sm:hidden mt-1">
+                          <Badge variant={due.type === 'hutang' ? 'destructive' : 'default'} className="text-xs">
+                            {due.type}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant={due.type === 'hutang' ? 'destructive' : 'default'}>
                           {due.type}
                         </Badge>

@@ -85,7 +85,7 @@ export default function CustomersPage() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-pulse">
+        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6 animate-pulse">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64 mt-2" />
             <Card className="mt-6">
@@ -120,7 +120,7 @@ export default function CustomersPage() {
 
   return (
     <MainLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">Daftar Pelanggan</h2>

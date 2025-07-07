@@ -317,7 +317,7 @@ export default function RecordsPage() {
   if (loading) {
     return (
        <MainLayout>
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 animate-pulse">
+        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6 animate-pulse">
           <Skeleton className="h-8 w-1/3" />
           <Skeleton className="h-4 w-2/3" />
           <div className="space-y-4 mt-6">
@@ -340,7 +340,7 @@ export default function RecordsPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Catatan Hutang & Piutang</h2>
@@ -404,41 +404,41 @@ export default function RecordsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Pihak</span>
-                <span className="col-span-2 font-semibold">{selectedRecord.name}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Pihak</span>
+                <span className="sm:col-span-2 font-semibold">{selectedRecord.name}</span>
               </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Jumlah</span>
-                <span className="col-span-2 font-semibold">{formatCurrency(selectedRecord.amount)}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Jumlah</span>
+                <span className="sm:col-span-2 font-semibold">{formatCurrency(selectedRecord.amount)}</span>
               </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Jenis</span>
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Jenis</span>
+                <div className="sm:col-span-2">
                     <Badge variant={selectedRecord.type === 'hutang' ? 'destructive' : 'default'}>
                         {selectedRecord.type}
                     </Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Status</span>
-                 <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Status</span>
+                 <div className="sm:col-span-2">
                     <Badge variant={selectedRecord.status === 'lunas' ? 'secondary' : 'outline'}>
                         {selectedRecord.status}
                     </Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Tanggal</span>
-                <span className="col-span-2">{format(new Date(selectedRecord.date), 'd MMMM yyyy', { locale: localeId })}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Tanggal</span>
+                <span className="sm:col-span-2">{format(new Date(selectedRecord.date), 'd MMMM yyyy', { locale: localeId })}</span>
               </div>
-               <div className="grid grid-cols-3 items-center gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground">Jatuh Tempo</span>
-                <span className="col-span-2">{format(new Date(selectedRecord.dueDate), 'd MMMM yyyy', { locale: localeId })}</span>
+               <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground">Jatuh Tempo</span>
+                <span className="sm:col-span-2">{format(new Date(selectedRecord.dueDate), 'd MMMM yyyy', { locale: localeId })}</span>
               </div>
-              <div className="grid grid-cols-3 items-start gap-4">
-                <span className="text-left col-span-1 text-sm font-medium text-muted-foreground pt-1">Deskripsi</span>
-                <p className="col-span-2 text-sm">{selectedRecord.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-baseline gap-1 sm:gap-4">
+                <span className="text-sm text-muted-foreground pt-1">Deskripsi</span>
+                <p className="sm:col-span-2 text-sm">{selectedRecord.description || '-'}</p>
               </div>
 
               <Separator className="my-2" />

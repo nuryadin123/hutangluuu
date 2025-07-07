@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -45,12 +46,17 @@ export function DataTable<TData, TValue>({
   onViewDetails,
   onDeleteRecord,
 }: DataTableProps<TData, TValue>) {
+  const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+    React.useState<VisibilityState>(isMobile ? {
+      status: false,
+      dueDate: false,
+      select: false,
+    } : {})
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
@@ -76,6 +82,14 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  React.useEffect(() => {
+    setColumnVisibility(isMobile ? {
+      status: false,
+      dueDate: false,
+      select: false,
+    } : {});
+  }, [isMobile]);
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
@@ -85,7 +99,7 @@ export function DataTable<TData, TValue>({
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="w-full max-w-sm"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

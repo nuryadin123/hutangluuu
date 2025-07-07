@@ -238,7 +238,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6 animate-pulse">
+        <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8 animate-pulse">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-full max-w-lg" />
           <div className="grid gap-4 md:grid-cols-2 mt-4">
@@ -253,7 +253,7 @@ export default function ReportsPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Laporan & Analisis</h2>

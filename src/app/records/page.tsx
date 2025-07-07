@@ -317,7 +317,7 @@ export default function RecordsPage() {
   if (loading) {
     return (
        <MainLayout>
-        <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6 animate-pulse">
+        <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8 animate-pulse">
           <Skeleton className="h-8 w-1/3" />
           <Skeleton className="h-4 w-2/3" />
           <div className="space-y-4 mt-6">
@@ -340,7 +340,7 @@ export default function RecordsPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Catatan Hutang & Piutang</h2>

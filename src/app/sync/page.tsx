@@ -142,7 +142,7 @@ export default function SyncPage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 space-y-4 p-4 sm:p-6 md:p-8 pt-6">
+      <div className="flex-1 space-y-4 p-4 pt-6 sm:p-6 md:p-8">
         <h2 className="text-3xl font-bold tracking-tight">Backup & Sinkronisasi</h2>
         <p className="text-muted-foreground">
           Data Anda disinkronkan secara otomatis ke cloud. Gunakan fitur ini untuk membuat backup manual (ekspor) atau memulihkan data dari file backup (impor).

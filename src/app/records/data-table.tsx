@@ -52,11 +52,7 @@ export function DataTable<TData, TValue>({
     []
   )
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>(isMobile ? {
-      status: false,
-      dueDate: false,
-      select: false,
-    } : {})
+    React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
@@ -83,6 +79,7 @@ export function DataTable<TData, TValue>({
   })
 
   React.useEffect(() => {
+    // Hide columns on mobile by default
     setColumnVisibility(isMobile ? {
       status: false,
       dueDate: false,
@@ -112,6 +109,10 @@ export function DataTable<TData, TValue>({
               .getAllColumns()
               .filter((column) => column.getCanHide())
               .map((column) => {
+                const headerText = 
+                    column.id === 'dueDate' ? 'Jatuh Tempo' 
+                    : column.id === 'name' ? 'Pihak' 
+                    : column.id.charAt(0).toUpperCase() + column.id.slice(1);
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -121,7 +122,7 @@ export function DataTable<TData, TValue>({
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {column.id === 'dueDate' ? 'Jatuh Tempo' : column.id}
+                   {headerText}
                   </DropdownMenuCheckboxItem>
                 )
               })}

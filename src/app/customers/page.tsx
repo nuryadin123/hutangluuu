@@ -7,9 +7,6 @@ import type { DebtRecord } from "@/lib/types";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -128,12 +125,6 @@ export default function CustomersPage() {
                   Ringkasan sisa piutang untuk setiap pelanggan.
                 </p>
               </div>
-              <Button asChild>
-                  <Link href="/add">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Tambah Catatan
-                  </Link>
-              </Button>
             </div>
             <Card>
                 <CardHeader>
